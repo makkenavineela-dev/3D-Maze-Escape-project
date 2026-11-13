@@ -4,15 +4,24 @@
 
 #include "Camera.h"
 
-// Mouse look and WASD walking (Person 1). Movement has no collision yet; that comes in Stage 3.
+#include <glm/vec2.hpp>
+
+// Mouse look and WASD walking (Person 1). Controls only turn the camera; the movement is returned
+// so the game can pass it through wall collision first.
 class Controls {
 public:
     Controls(GLFWwindow* window, Camera& camera);
-    void update(float deltaSeconds);
+
+    void setCaptured(bool captured);   // hide the cursor and use the mouse for looking
+    bool captured() const { return captured_; }
+
+    // Turns the camera with the mouse and returns the wanted movement on the ground (x, z)
+    glm::vec2 update(float deltaSeconds);
 
 private:
     GLFWwindow* window_;
     Camera& camera_;
+    bool captured_ = false;
     double lastX_ = 0.0;
     double lastY_ = 0.0;
 };

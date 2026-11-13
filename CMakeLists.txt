@@ -36,23 +36,25 @@ elseif(MSVC)
     set(PROJECT_WARNINGS /W4)
 endif()
 
-# Maze generation in plain C++ (no OpenGL), so it can be tested on its own
-add_library(maze_logic STATIC src/Maze.cpp)
+# Maze generation, collision and autopilot in plain C++ (no OpenGL), so they can be tested on their own
+add_library(maze_logic STATIC src/Maze.cpp src/Collision.cpp src/Autopilot.cpp)
 target_include_directories(maze_logic PUBLIC src)
 target_link_libraries(maze_logic PUBLIC glm)
 target_compile_options(maze_logic PRIVATE ${PROJECT_WARNINGS})
 
-# Rendering: shaders, meshes, camera and the scene
-add_library(maze_core STATIC src/Camera.cpp src/Mesh.cpp src/MazeMesh.cpp src/Scene.cpp src/Shader.cpp)
+# Rendering: shaders, textures, meshes, camera, the scene and the 2D overlay screens
+add_library(maze_core STATIC src/Camera.cpp src/Hud.cpp src/Mesh.cpp src/MazeMesh.cpp src/Overlay.cpp
+                             src/Scene.cpp src/Shader.cpp src/Texture.cpp)
 target_link_libraries(maze_core PUBLIC maze_logic glfw glad glm stb)
 target_compile_options(maze_core PRIVATE ${PROJECT_WARNINGS})
 
-# Copy the shaders next to the programs on every build
+# Copy the shaders and textures next to the programs on every build
 add_custom_target(copy_shaders ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/shaders ${CMAKE_BINARY_DIR}/shaders)
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/shaders ${CMAKE_BINARY_DIR}/shaders
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/textures ${CMAKE_BINARY_DIR}/textures)
 
 # The game
-add_executable(maze_escape src/main.cpp src/Controls.cpp)
+add_executable(maze_escape src/main.cpp src/Controls.cpp src/Game.cpp)
 target_link_libraries(maze_escape PRIVATE maze_core)
 target_compile_options(maze_escape PRIVATE ${PROJECT_WARNINGS})
 add_dependencies(maze_escape copy_shaders)

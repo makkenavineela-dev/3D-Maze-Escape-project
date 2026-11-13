@@ -1,13 +1,13 @@
 #version 330 core
 // Flashlight lighting per pixel (Person 4):
 //   I = I_ambient + I_light * max(N.L, 0) * A_distance * A_cone
-// then distance fog blends the result towards black.
+// multiplied by the surface texture, then distance fog blends the result towards black.
 
 in vec3 vWorldPos;
 in vec3 vNormal;
 in vec2 vUV;
 
-uniform vec3 uBaseColor;
+uniform sampler2D uTexture;    // wall or ground image
 
 uniform bool  uLightOn;
 uniform vec3  uLightPos;
@@ -18,6 +18,8 @@ uniform float uCosOuter;       // cos of the angle where the beam ends
 uniform float uAttConstant;
 uniform float uAttLinear;
 uniform float uAttQuadratic;
+uniform bool  uUseCone;        // demo switches: turn single terms off to show what they do
+uniform bool  uUseAttenuation;
 uniform float uAmbient;
 uniform float uFogDensity;
 uniform vec3  uCameraPos;
@@ -34,14 +36,17 @@ void main() {
     float diffuse = max(dot(N, L), 0.0);
 
     // Distance attenuation: light gets weaker further from the torch
-    float attenuation = 1.0 / (uAttConstant + uAttLinear * dist + uAttQuadratic * dist * dist);
+    float attenuation = uUseAttenuation
+        ? 1.0 / (uAttConstant + uAttLinear * dist + uAttQuadratic * dist * dist)
+        : 1.0;
 
     // Cone: 1 inside the inner angle, smooth fade to 0 at the outer angle
     float theta = dot(-L, uLightDir);
-    float cone = smoothstep(uCosOuter, uCosInner, theta);
+    float cone = uUseCone ? smoothstep(uCosOuter, uCosInner, theta) : 1.0;
 
     vec3 light = uLightOn ? uLightColor * diffuse * attenuation * cone : vec3(0.0);
-    vec3 color = uBaseColor * (uAmbient + light);
+    vec3 albedo = texture(uTexture, vUV).rgb;
+    vec3 color = albedo * (uAmbient + light);
 
     // Fog: the further away a surface is, the more it fades to black (exponential squared)
     float fogDistance = length(uCameraPos - vWorldPos);

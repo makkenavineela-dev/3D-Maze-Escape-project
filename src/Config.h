@@ -15,6 +15,10 @@ constexpr float kWallHeight    = 3.0f;
 constexpr float kWallThickness = 0.25f;
 constexpr float kGroundMargin  = 30.0f;     // ground continues this far past the outer wall
 
+// Collision and exit (Persons 2 and 4)
+constexpr float kPlayerRadius = 0.3f;   // the player is a circle this wide (metres) when touching walls
+constexpr float kExitDistance = 1.5f;   // the player wins this far outside the outer wall
+
 // Player and camera (Person 1)
 constexpr float kEyeHeight        = 1.6f;
 constexpr float kWalkSpeed        = 3.0f;   // metres per second

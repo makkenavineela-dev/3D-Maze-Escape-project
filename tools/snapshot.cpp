@@ -2,8 +2,9 @@
 //
 //   snapshot [--seed 42] [--out folder]
 //
-// Writes four .bmp pictures: top (whole maze from above, fully lit), start (player view at the
-// start), corridor (player view half-way along the solution) and exit (looking out of the exit).
+// Writes .bmp pictures: top (whole maze from above, fully lit), start (player view at the start),
+// corridor (player view half-way along the solution), exit (looking out of the exit), and the
+// screens: ui_start, ui_playing (crosshair, message, stats) and ui_victory.
 #include <glad/glad.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -11,7 +12,9 @@
 #include "Camera.h"
 #include "Config.h"
 #include "Flashlight.h"
+#include "Hud.h"
 #include "Maze.h"
+#include "Overlay.h"
 #include "Scene.h"
 
 #include <cmath>
@@ -76,14 +79,26 @@ struct Framebuffer {
     }
 };
 
-void shoot(const Scene& scene, const Camera& camera, const Flashlight& light, const std::string& path) {
+// Draws the scene, then optionally a screen on top, and saves the picture
+template <typename DrawScreen>
+void shoot(const Scene& scene, const Camera& camera, const Flashlight& light, const std::string& path,
+           Overlay* overlay, DrawScreen drawScreen) {
     glViewport(0, 0, kWidth, kHeight);
     scene.draw(camera, static_cast<float>(kWidth) / kHeight, light);
+    if (overlay) {
+        overlay->begin(kWidth, kHeight);
+        drawScreen(*overlay);
+        overlay->end();
+    }
     std::vector<unsigned char> pixels(static_cast<size_t>((kWidth * 3 + 3) & ~3) * kHeight);
     glPixelStorei(GL_PACK_ALIGNMENT, 4);
     glReadPixels(0, 0, kWidth, kHeight, GL_BGR, GL_UNSIGNED_BYTE, pixels.data());
     writeBmp(path, pixels);
     std::printf("Wrote %s\n", path.c_str());
+}
+
+void shoot(const Scene& scene, const Camera& camera, const Flashlight& light, const std::string& path) {
+    shoot(scene, camera, light, path, nullptr, [](Overlay&) {});
 }
 
 // Player camera standing in cell `from` looking towards the centre of cell `to`
@@ -95,7 +110,9 @@ Camera playerView(const Maze& maze, CellId from, CellId to) {
 
 void run(unsigned seed, const std::string& outDir, const char* exePath) {
     Maze maze(seed);
-    Scene scene(findShaderDir(exePath));
+    const std::string assetRoot = findAssetRoot(exePath);
+    Scene scene(assetRoot);
+    Overlay overlay(assetRoot);
     scene.build(maze);
     Framebuffer framebuffer;
     std::filesystem::create_directories(outDir);
@@ -132,6 +149,19 @@ void run(unsigned seed, const std::string& outDir, const char* exePath) {
     Camera exitView(glm::vec3(c.x, cfg::kEyeHeight, c.y), exitYaw, 0.0f);
     light.follow(exitView);
     shoot(scene, exitView, light, outDir + "/exit.bmp");
+
+    // The screens drawn over the 3D view
+    light.follow(start);
+    shoot(scene, start, light, outDir + "/ui_start.bmp", &overlay,
+          [](Overlay& o) { drawStartScreen(o, kWidth, kHeight, 0.5); });
+    light.follow(corridor);
+    shoot(scene, corridor, light, outDir + "/ui_playing.bmp", &overlay, [&](Overlay& o) {
+        drawPlayingHud(o, kWidth, kHeight, "2  No cone: light in every direction", 1.0f);
+        drawStats(o, kHeight, "FPS 60   Maze " + std::to_string(seed) + "   Time 01:23");
+    });
+    light.follow(exitView);
+    shoot(scene, exitView, light, outDir + "/ui_victory.bmp", &overlay,
+          [](Overlay& o) { drawVictoryScreen(o, kWidth, kHeight, 151.0, 0.5); });
 }
 
 }  // namespace

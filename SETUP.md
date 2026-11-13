@@ -44,24 +44,41 @@ File → Open → Folder, choose this project folder, wait for CMake to finish, 
 `check_setup` should print the OpenGL version (3.3 or higher) and end with `ALL OK`.
 If it says it could not create an OpenGL 3.3 window, update the graphics driver.
 
-## Play and test (Stages 1 and 2 are done)
+## Play (Stages 1 to 4 are done)
+
+Run `build\maze_escape.exe`. Find the single exit in the outer wall and walk a few steps outside to win.
+
+| Key | Action |
+|---|---|
+| Click / Enter | Start playing; on the victory screen, a new maze |
+| Mouse | Look around |
+| W A S D or arrow keys | Walk (Shift to run) |
+| F | Flashlight on/off |
+| 1 - 6 | Lighting demo: 1 full, 2 no cone, 3 no distance attenuation, 4 no fog, 5 ambient only, 6 daylight (whole maze lit) |
+| R | Give up and start a new maze |
+| F3 | Show FPS, maze number and time |
+| F11 | Full screen on/off |
+| Esc | Quit |
+
+Options: `--seed 42` starts with maze 42, `--autoplay` lets the game walk itself out of every maze (demo),
+`--frames 600` quits after 600 frames and prints the average FPS, `--novsync` shows how fast the PC really is.
+
+## Test tools
 
 | Program | What it does |
 |---|---|
-| `build\maze_escape.exe` | The game. Mouse to look, WASD or arrow keys to walk, Shift to run, Esc to quit. `--seed 42` replays maze 42. |
-| `build\maze_test.exe` | Checks 1000 random mazes (every cell reachable, no loops, exactly one exit). `maze_test --svg maze.svg 42` draws maze 42 from above; open the .svg in a browser. |
-| `build\snapshot.exe` | Saves four pictures of a maze without playing (`top`, `start`, `corridor`, `exit` .bmp) into a `snapshots` folder. `--seed 42` picks the maze. |
-
-Walls have no collision yet, so you can walk through them; that is Stage 3.
+| `build\maze_test.exe` | Checks 1000 random mazes (every cell reachable, no loops, exactly one exit), then collision: 200 random walks of 20000 steps must never get into or through a wall, and an autopilot must walk out of every maze. `maze_test --svg maze.svg 42` draws maze 42 from above; open the .svg in a browser. |
+| `build\snapshot.exe` | Saves pictures without playing into a `snapshots` folder: `top`, `start`, `corridor`, `exit` and the screens `ui_start`, `ui_playing`, `ui_victory` (.bmp). `--seed 42` picks the maze. |
+| `python tools/make_textures.py` | Regenerates `textures/` (brick wall, ground, font). Needs Python with numpy, Pillow and matplotlib. |
 
 ## Who owns which file
 
 | Person | Files |
 |---|---|
 | Everyone | `src/Config.h` (shared sizes agreed at the kickoff) |
-| Person 1: engine, camera, game flow | `src/main.cpp`, `src/Camera.*`, `src/Controls.*` |
-| Person 2: maze and collision | `src/Maze.*` (`WallSegment`, `worldToCell`, `exitSector`), `tools/maze_test.cpp` |
-| Person 3: geometry, textures, UI | `src/Mesh.*`, `src/MazeMesh.*`, `src/Scene.*` (shared with Person 4) |
-| Person 4: lighting and shaders | `src/Shader.*`, `src/Flashlight.h`, `shaders/*.vert`, `shaders/*.frag` |
+| Person 1: engine, camera, game flow | `src/main.cpp`, `src/Game.*`, `src/Camera.*`, `src/Controls.*` |
+| Person 2: maze and collision | `src/Maze.*` (`WallSegment`, `worldToCell`, `exitSector`), `src/Collision.*`, `src/Autopilot.*`, `tools/maze_test.cpp` |
+| Person 3: geometry, textures, UI | `src/Mesh.*`, `src/MazeMesh.*`, `src/Texture.*`, `src/Overlay.*`, `src/Hud.*`, `shaders/overlay.*`, `textures/`, `tools/make_textures.py`, `src/Scene.*` (shared with Person 4) |
+| Person 4: lighting and shaders | `src/Shader.*`, `src/Flashlight.h`, `src/LightingModes.h`, `src/Exit.h`, `shaders/scene.*`, `shaders/sky.*` |
 
-Shaders are copied next to the programs on every build, so after editing a shader just build again.
+Shaders and textures are copied next to the programs on every build, so after editing one just build again.

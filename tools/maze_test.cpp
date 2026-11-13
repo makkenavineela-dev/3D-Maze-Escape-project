@@ -1,8 +1,13 @@
-// Maze checks (Person 2): generates many mazes and verifies that each one is perfect and solvable.
+// Maze checks (Person 2): generates many mazes and verifies that each one is perfect and solvable,
+// then checks wall collision: a random walker must never get into or through a wall, and an
+// autopilot following the solution must be able to walk out of every maze.
 //
 //   maze_test                       test seeds 1..1000
 //   maze_test 5000                  test seeds 1..5000
 //   maze_test --svg maze.svg 42     draw maze 42 from above as an SVG picture (open it in a browser)
+#include "Autopilot.h"
+#include "Collision.h"
+#include "Exit.h"
 #include "Maze.h"
 
 #include <algorithm>
@@ -12,6 +17,7 @@
 #include <cstring>
 #include <fstream>
 #include <glm/gtc/constants.hpp>
+#include <random>
 #include <string>
 #include <utility>
 
@@ -58,6 +64,46 @@ std::string check(const Maze& maze) {
     for (size_t i = 1; i < path.size(); ++i)
         if (!maze.linked(path[i - 1], path[i])) return "path goes through a wall";
     return "";
+}
+
+// Walks around at random, bumping into walls, and checks the player never overlaps a wall and only
+// moves between cells that have no wall between them (or leaves the maze through the exit)
+std::string randomWalk(const Maze& maze, unsigned seed, int steps) {
+    const Collision collision(maze);
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<float> randomAngle(0.0f, glm::two_pi<float>());
+    std::uniform_int_distribution<int> turnChance(0, 59);
+    glm::vec2 position(0.0f);
+    float heading = randomAngle(rng);
+    CellId cell = maze.worldToCell(0.0f, 0.0f);
+    const CellId exitCell{maze.rings() - 1, maze.exitSector()};
+
+    for (int i = 0; i < steps; ++i) {
+        if (turnChance(rng) == 0) heading = randomAngle(rng);
+        const glm::vec2 next = collision.move(position, glm::vec2(std::cos(heading), std::sin(heading)) * 0.09f);
+        if (collision.clearance(next) < -0.001f) return "player overlaps a wall";
+        const CellId nextCell = maze.worldToCell(next.x, next.y);
+        const bool wasOutside = cell.ring >= maze.rings(), isOutside = nextCell.ring >= maze.rings();
+        if (wasOutside != isOutside) {
+            if (!((isOutside ? cell : nextCell) == exitCell)) return "walked through the outer wall";
+        } else if (!isOutside && !(nextCell == cell) && !maze.linked(cell, nextCell)) {
+            return "walked through a wall";
+        }
+        position = next;
+        cell = nextCell;
+    }
+    return "";
+}
+
+std::string autopilotEscapes(const Maze& maze) {
+    const Collision collision(maze);
+    Autopilot pilot(maze);
+    glm::vec2 position(0.0f);
+    for (int i = 0; i < 40000; ++i) {
+        position = collision.move(position, pilot.step(position, 0.09f));
+        if (hasEscaped(maze, position)) return "";
+    }
+    return "autopilot got stuck";
 }
 
 void writeSvg(const Maze& maze, const std::string& fileName) {
@@ -135,5 +181,21 @@ int main(int argc, char** argv) {
     if (passed > 0)
         std::printf("Solution length (cells): shortest %d, average %.1f, longest %d; average dead ends %.1f\n",
                     shortest, double(totalLength) / passed, longest, double(totalDeadEnds) / passed);
-    return failures == 0 ? 0 : 1;
+
+    // Collision: random walks in the first mazes, autopilot escape in all of them
+    const int walkMazes = std::min(count, 200), walkSteps = 20000;
+    int walkFailures = 0, pilotFailures = 0;
+    for (int seed = 1; seed <= count; ++seed) {
+        const Maze maze(static_cast<unsigned>(seed));
+        if (seed <= walkMazes) {
+            const std::string problem = randomWalk(maze, static_cast<unsigned>(seed), walkSteps);
+            if (!problem.empty() && ++walkFailures <= 10) std::printf("FAIL collision seed %d: %s\n", seed, problem.c_str());
+        }
+        const std::string stuck = autopilotEscapes(maze);
+        if (!stuck.empty() && ++pilotFailures <= 10) std::printf("FAIL autopilot seed %d: %s\n", seed, stuck.c_str());
+    }
+    std::printf("Collision: %d random walks of %d steps, %d failed; autopilot escaped %d of %d mazes\n", walkMazes,
+                walkSteps, walkFailures, count - pilotFailures, count);
+
+    return failures + walkFailures + pilotFailures == 0 ? 0 : 1;
 }

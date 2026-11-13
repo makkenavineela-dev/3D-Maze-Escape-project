@@ -7,14 +7,11 @@
 #include <stdexcept>
 #include <vector>
 
-namespace {
-const glm::vec3 kWallColor(0.55f, 0.52f, 0.48f);     // pale stone
-const glm::vec3 kGroundColor(0.33f, 0.30f, 0.27f);   // dark earth
-}
-
-Scene::Scene(const std::string& shaderDir)
-    : sceneShader_(shaderDir + "/scene.vert", shaderDir + "/scene.frag"),
-      skyShader_(shaderDir + "/sky.vert", shaderDir + "/sky.frag") {
+Scene::Scene(const std::string& assetRoot)
+    : sceneShader_(assetRoot + "/shaders/scene.vert", assetRoot + "/shaders/scene.frag"),
+      skyShader_(assetRoot + "/shaders/sky.vert", assetRoot + "/shaders/sky.frag"),
+      wallTexture_(assetRoot + "/textures/wall.png"),
+      groundTexture_(assetRoot + "/textures/ground.png") {
     sky_.upload(buildSkyMesh());
 }
 
@@ -54,23 +51,25 @@ void Scene::draw(const Camera& camera, float aspect, const Flashlight& light) co
     sceneShader_.setFloat("uAttConstant", light.constant);
     sceneShader_.setFloat("uAttLinear", light.linear);
     sceneShader_.setFloat("uAttQuadratic", light.quadratic);
+    sceneShader_.setBool("uUseCone", useCone);
+    sceneShader_.setBool("uUseAttenuation", useAttenuation);
     sceneShader_.setFloat("uAmbient", ambient);
     sceneShader_.setFloat("uFogDensity", fogDensity);
     sceneShader_.setVec3("uCameraPos", camera.position);
+    sceneShader_.setInt("uTexture", 0);
 
-    sceneShader_.setVec3("uBaseColor", kGroundColor);
+    groundTexture_.bind(0);
     ground_.draw();
-    sceneShader_.setVec3("uBaseColor", kWallColor);
+    wallTexture_.bind(0);
     walls_.draw();
 }
 
-std::string findShaderDir(const char* exePath) {
+std::string findAssetRoot(const char* exePath) {
     namespace fs = std::filesystem;
     std::error_code error;
     const fs::path exeDir = fs::absolute(fs::path(exePath), error).parent_path();
-    const std::vector<fs::path> candidates = {exeDir / "shaders", fs::current_path(error) / "shaders",
-                                              exeDir.parent_path() / "shaders"};
-    for (const fs::path& dir : candidates)
-        if (fs::exists(dir / "scene.vert", error)) return dir.string();
-    throw std::runtime_error("Cannot find the 'shaders' folder (looked next to the program and in the current folder)");
+    for (const fs::path& dir : {exeDir, fs::current_path(error), exeDir.parent_path()})
+        if (fs::exists(dir / "shaders" / "scene.vert", error) && fs::exists(dir / "textures" / "wall.png", error))
+            return dir.string();
+    throw std::runtime_error("Cannot find the 'shaders' and 'textures' folders (looked next to the program and in the current folder)");
 }
