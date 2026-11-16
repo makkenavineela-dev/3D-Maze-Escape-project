@@ -1,5 +1,5 @@
 #version 330 core
-// 2D overlay (Person 3): positions are in screen pixels, turned into clip space by an orthographic projection
+// 2D overlay: screen-pixel positions are turned into clip space by an orthographic projection
 
 layout(location = 0) in vec2 aPosition;
 layout(location = 1) in vec2 aUV;

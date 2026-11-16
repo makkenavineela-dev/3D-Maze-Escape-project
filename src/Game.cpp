@@ -12,17 +12,10 @@
 namespace {
 constexpr double kMessageSeconds = 2.5;           // how long a message like "Flashlight off" stays
 constexpr float kStartScreenTurnSpeed = 6.0f;     // degrees per second the view drifts on the start screen
-constexpr float kAutoplayTurnSpeed = 240.0f;      // degrees per second the autopilot can turn
-constexpr double kAutoplayNextMazeSeconds = 3.0;  // autoplay shows the victory screen this long
-
-float wrapDegrees(float a) {
-    a = std::fmod(a + 180.0f, 360.0f);
-    return (a < 0.0f ? a + 360.0f : a) - 180.0f;
-}
 }  // namespace
 
-Game::Game(GLFWwindow* window, const std::string& assetRoot, unsigned firstSeed, bool autoplay)
-    : window_(window), autoplay_(autoplay), rng_(std::random_device{}()), maze_(firstSeed), collision_(maze_),
+Game::Game(GLFWwindow* window, const std::string& assetRoot, unsigned firstSeed)
+    : window_(window), rng_(std::random_device{}()), maze_(firstSeed), collision_(maze_),
       scene_(assetRoot), overlay_(assetRoot), camera_(glm::vec3(0.0f, cfg::kEyeHeight, 0.0f)),
       controls_(window, camera_), fogDensity_(scene_.fogDensity) {
     glfwSetWindowUserPointer(window_, this);
@@ -34,7 +27,6 @@ Game::Game(GLFWwindow* window, const std::string& assetRoot, unsigned firstSeed,
     });
 
     newMaze(firstSeed);
-    if (autoplay_) startPlaying();
 }
 
 // Builds everything for a maze and puts the player in the centre, facing one of its doorways
@@ -42,7 +34,6 @@ void Game::newMaze(unsigned seed) {
     maze_ = Maze(seed);
     collision_ = Collision(maze_);
     scene_.build(maze_);
-    if (autoplay_) autopilot_.emplace(maze_);
 
     std::vector<CellId> doors;
     for (CellId n : maze_.neighbours({0, 0}))
@@ -58,7 +49,7 @@ void Game::newMaze(unsigned seed) {
 void Game::startPlaying() {
     state_ = State::Playing;
     playSeconds_ = 0.0;
-    controls_.setCaptured(!autoplay_);
+    controls_.setCaptured(true);
 }
 
 void Game::playNewMaze() {
@@ -69,7 +60,6 @@ void Game::playNewMaze() {
 void Game::onVictory() {
     state_ = State::Victory;
     victorySeconds_ = playSeconds_;
-    victoryClock_ = clock_;
     controls_.setCaptured(false);
     std::printf("Escaped maze %u in %s\n", maze_.seed(), formatTime(victorySeconds_).c_str());
     std::fflush(stdout);
@@ -83,19 +73,9 @@ void Game::update(float dt) {
         playSeconds_ += dt;
         const glm::vec2 position(camera_.position.x, camera_.position.z);
         glm::vec2 move = controls_.update(dt);
-        if (autopilot_) {
-            move = autopilot_->step(position, cfg::kWalkSpeed * cfg::kSprintFactor * dt);
-            if (glm::length(move) > 0.0f) {   // turn smoothly towards where it walks
-                const float turn = wrapDegrees(glm::degrees(std::atan2(move.y, move.x)) - camera_.yaw());
-                const float maxTurn = kAutoplayTurnSpeed * dt;
-                camera_.rotate(std::clamp(turn, -maxTurn, maxTurn), -camera_.pitch());
-            }
-        }
         const glm::vec2 next = collision_.move(position, move);   // walls stop the player here
         camera_.position = glm::vec3(next.x, cfg::kEyeHeight, next.y);
         if (hasEscaped(maze_, next)) onVictory();
-    } else if (autoplay_ && clock_ - victoryClock_ > kAutoplayNextMazeSeconds) {
-        playNewMaze();
     }
     flashlight_.follow(camera_);
     applyLighting();

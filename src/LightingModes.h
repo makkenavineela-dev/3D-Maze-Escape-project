@@ -1,6 +1,6 @@
 #pragma once
 
-// Lighting demo modes (Person 4). Keys 1-6 switch between them, so each part of the lighting
+// Lighting demo modes. Keys 1-6 switch between them, so each part of the lighting
 // formula can be shown on its own in the viva.
 struct LightingMode {
     const char* name;

@@ -3,7 +3,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#include "Autopilot.h"
 #include "Camera.h"
 #include "Collision.h"
 #include "Controls.h"
@@ -12,15 +11,13 @@
 #include "Overlay.h"
 #include "Scene.h"
 
-#include <optional>
 #include <random>
 #include <string>
 
-// Game flow (Person 1): start screen -> playing -> victory -> new maze -> playing ...
+// Game flow: start screen -> playing -> victory -> new maze -> playing ...
 class Game {
 public:
-    // autoplay = demo mode: the game walks itself out of each maze and starts the next one
-    Game(GLFWwindow* window, const std::string& assetRoot, unsigned firstSeed, bool autoplay);
+    Game(GLFWwindow* window, const std::string& assetRoot, unsigned firstSeed);
     Game(const Game&) = delete;
     Game& operator=(const Game&) = delete;
 
@@ -42,11 +39,9 @@ private:
     void toggleFullscreen();
 
     GLFWwindow* window_;
-    bool autoplay_;
     std::mt19937 rng_;
     Maze maze_;
     Collision collision_;
-    std::optional<Autopilot> autopilot_;
     Scene scene_;
     Overlay overlay_;
     Camera camera_;
@@ -57,7 +52,6 @@ private:
     double clock_ = 0.0;          // seconds since the game started
     double playSeconds_ = 0.0;    // time spent in the current maze
     double victorySeconds_ = 0.0;
-    double victoryClock_ = 0.0;
     int lightingMode_ = 0;        // index into kLightingModes
     bool flashlightOn_ = true;
     float fogDensity_;

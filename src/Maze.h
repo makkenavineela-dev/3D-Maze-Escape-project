@@ -21,7 +21,7 @@ struct CellId {
     bool operator==(const CellId& other) const { return ring == other.ring && sector == other.sector; }
 };
 
-// Circular maze on a polar grid (Person 2). Ring 0 is the round centre room; every other ring is
+// Circular maze on a polar grid. Ring 0 is the round centre room; every other ring is
 // split into sectors. It is carved with a recursive backtracker, so it is a perfect maze (every
 // cell reachable, no loops), and a single exit is cut into the outer wall.
 class Maze {
@@ -35,6 +35,7 @@ public:
     float ringWidth() const;
     float outerRadius() const;
     int exitSector() const { return exitSector_; }   // sector of the outermost ring that has the exit
+    glm::vec2 exitWorldPos() const;                  // world (x, z) of the exit gap centre on the outer wall
 
     std::vector<CellId> neighbours(CellId cell) const;   // adjacent cells, ignoring walls
     bool linked(CellId a, CellId b) const;                // true when there is no wall between a and b

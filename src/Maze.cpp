@@ -39,6 +39,13 @@ float Maze::ringWidth() const { return cfg::kRingWidth; }
 
 float Maze::outerRadius() const { return rings() * cfg::kRingWidth; }
 
+glm::vec2 Maze::exitWorldPos() const {
+    // Centre of the exit gap in world (x, z): midpoint of the exit sector's arc on the outer wall
+    const float step = kTwoPi / sectorCounts_.back();
+    const float angle = (exitSector_ + 0.5f) * step;
+    return glm::vec2(outerRadius() * std::cos(angle), outerRadius() * std::sin(angle));
+}
+
 // Recursive backtracker (depth-first search) with an explicit stack instead of recursion
 void Maze::carve(std::mt19937& rng) {
     std::vector<std::vector<bool>> visited(cells_.size());

@@ -1,5 +1,5 @@
 #version 330 core
-// Flashlight lighting per pixel (Person 4):
+// Per-pixel flashlight lighting:
 //   I = I_ambient + I_light * max(N.L, 0) * A_distance * A_cone
 // multiplied by the surface texture, then distance fog blends the result towards black.
 
@@ -23,33 +23,46 @@ uniform bool  uUseAttenuation;
 uniform float uAmbient;
 uniform float uFogDensity;
 uniform vec3  uCameraPos;
+uniform bool  uEmissive;
+uniform vec4  uEmissiveColor;
 
 out vec4 FragColor;
 
 void main() {
-    vec3 N = normalize(vNormal);
-    vec3 toLight = uLightPos - vWorldPos;
-    float dist = length(toLight);
-    vec3 L = toLight / dist;
+    if (uEmissive) {
+        FragColor = uEmissiveColor;
+        return;
+    }
 
-    // Diffuse: surfaces facing the light are brightest
-    float diffuse = max(dot(N, L), 0.0);
+    vec3 light = vec3(0.0);
+    if (uLightOn) {
+        vec3 N = normalize(vNormal);
+        vec3 toLight = uLightPos - vWorldPos;
+        float dist = length(toLight);
+        vec3 L = toLight / dist;
 
-    // Distance attenuation: light gets weaker further from the torch
-    float attenuation = uUseAttenuation
-        ? 1.0 / (uAttConstant + uAttLinear * dist + uAttQuadratic * dist * dist)
-        : 1.0;
+        // Diffuse: surfaces facing the light are brightest
+        float diffuse = max(dot(N, L), 0.0);
 
-    // Cone: 1 inside the inner angle, smooth fade to 0 at the outer angle
-    float theta = dot(-L, uLightDir);
-    float cone = uUseCone ? smoothstep(uCosOuter, uCosInner, theta) : 1.0;
+        // Distance attenuation: light gets weaker further from the torch
+        float attenuation = uUseAttenuation
+            ? 1.0 / (uAttConstant + uAttLinear * dist + uAttQuadratic * dist * dist)
+            : 1.0;
 
-    vec3 light = uLightOn ? uLightColor * diffuse * attenuation * cone : vec3(0.0);
+        // Cone: 1 inside the inner angle, smooth fade to 0 at the outer angle
+        float theta = dot(-L, uLightDir);
+        float cone = uUseCone ? smoothstep(uCosOuter, uCosInner, theta) : 1.0;
+        light = uLightColor * diffuse * attenuation * cone;
+    }
     vec3 albedo = texture(uTexture, vUV).rgb;
     vec3 color = albedo * (uAmbient + light);
 
     // Fog: the further away a surface is, the more it fades to black (exponential squared)
-    float fogDistance = length(uCameraPos - vWorldPos);
-    float visibility = exp(-pow(uFogDensity * fogDistance, 2.0));
+    float visibility = 1.0;
+    if (uFogDensity > 0.0) {
+        vec3 toCamera = uCameraPos - vWorldPos;
+        float fogAmount = uFogDensity * uFogDensity * dot(toCamera, toCamera);
+        visibility = exp(-fogAmount);
+    }
     FragColor = vec4(color * visibility, 1.0);
 }

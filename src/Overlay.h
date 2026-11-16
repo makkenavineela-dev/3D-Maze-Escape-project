@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-// 2D drawing on top of the 3D view (Person 3): rectangles and text measured in screen pixels.
+// 2D drawing on top of the 3D view: rectangles and text measured in screen pixels.
 // An orthographic projection puts (0, 0) at the top-left corner of the window.
 class Overlay {
 public:

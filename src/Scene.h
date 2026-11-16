@@ -29,6 +29,7 @@ private:
     Texture groundTexture_;
     Mesh walls_;
     Mesh ground_;
+    Mesh exitTrigger_;
     Mesh sky_;
 };
 

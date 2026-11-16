@@ -1,4 +1,4 @@
-"""Generates the game's textures into the textures/ folder (Person 3).
+"""Generates the game's textures into the textures/ folder.
 
     python tools/make_textures.py
 

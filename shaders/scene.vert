@@ -1,5 +1,5 @@
 #version 330 core
-// Ground and walls (Person 4): passes world-space position and normal to the fragment shader
+// Passes ground and wall positions and normals to the fragment shader
 
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 aNormal;

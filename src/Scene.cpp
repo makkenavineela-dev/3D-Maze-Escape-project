@@ -18,6 +18,7 @@ Scene::Scene(const std::string& assetRoot)
 void Scene::build(const Maze& maze) {
     walls_.upload(buildWallMesh(maze.walls()));
     ground_.upload(buildGroundMesh(maze.outerRadius() + cfg::kGroundMargin));
+    exitTrigger_.upload(buildExitTriggerMesh(maze));
 }
 
 void Scene::draw(const Camera& camera, float aspect, const Flashlight& light) const {
@@ -60,6 +61,18 @@ void Scene::draw(const Camera& camera, float aspect, const Flashlight& light) co
 
     groundTexture_.bind(0);
     ground_.draw();
+
+    // Draw the exit's trigger band as a translucent, emissive green arc.
+    sceneShader_.setBool("uEmissive", true);
+    sceneShader_.setVec4("uEmissiveColor", glm::vec4(0.1f, 1.0f, 0.15f, 0.45f));
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+    exitTrigger_.draw();
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    sceneShader_.setBool("uEmissive", false);
+
     wallTexture_.bind(0);
     walls_.draw();
 }

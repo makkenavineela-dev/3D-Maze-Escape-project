@@ -98,6 +98,30 @@ MeshData buildGroundMesh(float radius) {
     return mesh;
 }
 
+MeshData buildExitTriggerMesh(const Maze& maze) {
+    MeshData mesh;
+    const glm::vec2 exit = maze.exitWorldPos();
+    const float centreAngle = std::atan2(exit.y, exit.x);
+    const float innerRadius = maze.outerRadius() + cfg::kExitTriggerOffset - cfg::kExitTriggerThickness * 0.5f;
+    const float outerRadius = maze.outerRadius() + cfg::kExitTriggerOffset + cfg::kExitTriggerThickness * 0.5f;
+    const float startAngle = centreAngle - cfg::kExitTriggerHalfAngle;
+    const float endAngle = centreAngle + cfg::kExitTriggerHalfAngle;
+    const int steps = std::max(1, static_cast<int>(std::ceil((endAngle - startAngle) / kMaxArcStep)));
+    constexpr float y = 0.02f;  // lift slightly above the ground to avoid z-fighting
+
+    for (int i = 0; i < steps; ++i) {
+        const float a0 = startAngle + (endAngle - startAngle) * i / steps;
+        const float a1 = startAngle + (endAngle - startAngle) * (i + 1) / steps;
+        const glm::vec3 inner0(std::cos(a0) * innerRadius, y, std::sin(a0) * innerRadius);
+        const glm::vec3 inner1(std::cos(a1) * innerRadius, y, std::sin(a1) * innerRadius);
+        const glm::vec3 outer0(std::cos(a0) * outerRadius, y, std::sin(a0) * outerRadius);
+        const glm::vec3 outer1(std::cos(a1) * outerRadius, y, std::sin(a1) * outerRadius);
+        mesh.addQuad(vtx(inner0, kUp, planarUV(inner0)), vtx(outer0, kUp, planarUV(outer0)),
+                     vtx(outer1, kUp, planarUV(outer1)), vtx(inner1, kUp, planarUV(inner1)));
+    }
+    return mesh;
+}
+
 MeshData buildSkyMesh() {
     MeshData mesh;
     constexpr int kStacks = 16, kSlices = 32;
