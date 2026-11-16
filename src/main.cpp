@@ -2,7 +2,6 @@
 //
 //   maze_escape               play, starting with a new random maze
 //   maze_escape --seed 42     start with maze number 42
-//   maze_escape --autoplay    demo: the game walks itself out of each maze
 //   maze_escape --frames 120  quit after 120 frames and print the average FPS (quick test)
 //   maze_escape --novsync     do not wait for the screen refresh (shows how fast the PC really is)
 #include <glad/glad.h>
@@ -23,7 +22,6 @@ namespace {
 struct Options {
     unsigned seed = 0;
     int frames = 0;   // > 0: quit after this many frames
-    bool autoplay = false;
     bool vsync = true;
 };
 
@@ -34,7 +32,6 @@ Options parseOptions(int argc, char** argv) {
         const bool hasValue = i + 1 < argc;
         if (std::strcmp(argv[i], "--seed") == 0 && hasValue) options.seed = static_cast<unsigned>(std::strtoul(argv[++i], nullptr, 10));
         else if (std::strcmp(argv[i], "--frames") == 0 && hasValue) options.frames = std::atoi(argv[++i]);
-        else if (std::strcmp(argv[i], "--autoplay") == 0) options.autoplay = true;
         else if (std::strcmp(argv[i], "--novsync") == 0) options.vsync = false;
     }
     return options;
@@ -65,7 +62,7 @@ int main(int argc, char** argv) {
         const Options options = parseOptions(argc, argv);
         GLFWwindow* window = createWindow(options.vsync);
         {
-            Game game(window, findAssetRoot(argv[0]), options.seed, options.autoplay);   // owns all OpenGL objects
+            Game game(window, findAssetRoot(argv[0]), options.seed);   // owns all OpenGL objects
             game.run(options.frames);
         }
         glfwDestroyWindow(window);

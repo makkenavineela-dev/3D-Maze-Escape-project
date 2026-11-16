@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-// Loads, compiles and links a GLSL vertex + fragment shader pair (Person 4).
+// Loads, compiles and links a GLSL vertex + fragment shader pair.
 // Throws std::runtime_error with the compiler log if anything fails.
 class Shader {
 public:

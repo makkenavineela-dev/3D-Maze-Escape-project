@@ -2,7 +2,7 @@
 #include <glad/glad.h>
 #include <string>
 
-// An image file loaded onto the GPU with stb_image, with mipmaps (Person 3)
+// An image file loaded onto the GPU with stb_image, with mipmaps
 class Texture {
 public:
     // repeat = true tiles the image (walls, ground); false clamps at the edges (font)

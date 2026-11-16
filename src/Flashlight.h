@@ -2,7 +2,7 @@
 #include "Camera.h"
 #include <glm/glm.hpp>
 
-// Spotlight carried by the player (Person 4). The beam is wide and soft so it fills the whole
+// Spotlight carried by the player. The beam is wide and soft so it fills the whole
 // view like natural sight in the dark: bright in the middle, fading towards the screen edges.
 struct Flashlight {
     glm::vec3 position{0.0f};

@@ -36,8 +36,8 @@ elseif(MSVC)
     set(PROJECT_WARNINGS /W4)
 endif()
 
-# Maze generation, collision and autopilot in plain C++ (no OpenGL), so they can be tested on their own
-add_library(maze_logic STATIC src/Maze.cpp src/Collision.cpp src/Autopilot.cpp)
+# Maze generation and collision in plain C++ (no OpenGL)
+add_library(maze_logic STATIC src/Maze.cpp src/Collision.cpp)
 target_include_directories(maze_logic PUBLIC src)
 target_link_libraries(maze_logic PUBLIC glm)
 target_compile_options(maze_logic PRIVATE ${PROJECT_WARNINGS})
@@ -59,11 +59,7 @@ target_link_libraries(maze_escape PRIVATE maze_core)
 target_compile_options(maze_escape PRIVATE ${PROJECT_WARNINGS})
 add_dependencies(maze_escape copy_shaders)
 
-# Test tools: maze checks over many seeds, and still pictures of the rendered maze
-add_executable(maze_test tools/maze_test.cpp)
-target_link_libraries(maze_test PRIVATE maze_logic)
-target_compile_options(maze_test PRIVATE ${PROJECT_WARNINGS})
-
+# Snapshot tool for saving still pictures of the rendered maze
 add_executable(snapshot tools/snapshot.cpp)
 target_link_libraries(snapshot PRIVATE maze_core)
 target_compile_options(snapshot PRIVATE ${PROJECT_WARNINGS})

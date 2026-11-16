@@ -3,7 +3,7 @@
 
 #include <string>
 
-// The game's screens, drawn with the overlay (Person 3). `clock` (seconds) animates pulsing text.
+// The game's screens, drawn with the overlay. `clock` (seconds) animates pulsing text.
 void drawStartScreen(Overlay& overlay, int width, int height, double clock);
 void drawVictoryScreen(Overlay& overlay, int width, int height, double escapeSeconds, double clock);
 // While playing: crosshair and an optional fading message

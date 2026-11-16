@@ -1,7 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 
-// First-person camera (Person 1): yaw/pitch angles, lookAt view matrix and perspective projection.
+// First-person camera with yaw/pitch angles, a lookAt view matrix and perspective projection.
 // Yaw 0 looks along +X; yaw grows towards +Z (turning right).
 class Camera {
 public:

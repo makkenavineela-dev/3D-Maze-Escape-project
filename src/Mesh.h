@@ -10,7 +10,7 @@ struct Vertex {
     glm::vec2 uv;
 };
 
-// Vertices and indices built on the CPU before they are uploaded to the GPU (Person 3)
+// Vertices and indices built on the CPU before they are uploaded to the GPU
 struct MeshData {
     std::vector<Vertex> vertices;
     std::vector<std::uint32_t> indices;

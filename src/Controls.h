@@ -6,7 +6,7 @@
 
 #include <glm/vec2.hpp>
 
-// Mouse look and WASD walking (Person 1). Controls only turn the camera; the movement is returned
+// Mouse look and WASD walking. Controls turn the camera; movement is returned
 // so the game can pass it through wall collision first.
 class Controls {
 public:

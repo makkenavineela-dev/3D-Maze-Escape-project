@@ -4,7 +4,7 @@
 #include <glm/vec2.hpp>
 #include <vector>
 
-// Wall collision (Person 2). The player is a circle on the ground plane (x, z). Each frame only the
+// Wall collision. The player is a circle on the ground plane (x, z). Each frame only the
 // walls of the player's cell and its neighbouring cells are tested. When the circle overlaps a wall
 // it is pushed straight out, which cancels the part of the movement going into the wall and keeps
 // the part along it, so the player slides along walls instead of sticking.
